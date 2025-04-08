@@ -1,0 +1,28 @@
+# Set the default charset.
+AddDefaultCharset UTF-8
+
+# Don't show directory listings for URLs which map to a directory.
+Options -Indexes
+
+# Enable symlinks
+Options +FollowSymlinks
+
+# Enable mod_rewrite
+RewriteEngine On
+RewriteBase /
+
+# Backend redirect
+RewriteCond %{REQUEST_URI} ^/purepetal/backend
+RewriteRule ^backend/(.*)$ purepetal/backend/web/$1 [L]
+
+# # blogger redirect
+RewriteCond %{REQUEST_URI} ^/purepetal/api
+RewriteRule ^api/(.*)$ purepetal/api/web/$1 [L]
+
+# # Storage redirect
+# RewriteCond %{REQUEST_URI} ^/bima_facts/store
+# RewriteRule ^storage/(.*)$ bima_facts/storage/$1 [L]
+
+# Frontend redirect
+RewriteCond %{REQUEST_URI} ^/purepetal/(.*)$
+RewriteRule ^(.*)$ purepetal/frontend/web/$1
