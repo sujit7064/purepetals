@@ -9,10 +9,9 @@ use Yii;
  *
  * @property int $id
  * @property int $user_id
- * @property string $company_name
- * @property string $phone_number
+ * @property string $name
+ * @property int $phone_number
  * @property string $email
- * @property string $password
  * @property int $is_delete
  * @property string $created_at
  * @property string $updated_at
@@ -36,10 +35,10 @@ class Registration extends \yii\db\ActiveRecord
     {
         return [
             [['is_delete'], 'default', 'value' => 0],
-            [['user_id', 'company_name', 'phone_number', 'email', 'logo'], 'required'],
-            [['user_id', 'is_delete'], 'integer'],
+            [['user_id', 'name', 'phone_number', 'email'], 'required'],
+            [['user_id', 'phone_number', 'is_delete'], 'integer'],
             [['created_at', 'updated_at'], 'safe'],
-            [['company_name', 'email', 'logo'], 'string', 'max' => 255],
+            [['name', 'email'], 'string', 'max' => 255],
         ];
     }
 
@@ -51,10 +50,9 @@ class Registration extends \yii\db\ActiveRecord
         return [
             'id' => 'ID',
             'user_id' => 'User ID',
-            'company_name' => 'Company Name',
+            'name' => 'Name',
             'phone_number' => 'Phone Number',
             'email' => 'Email',
-            'logo' => 'logo',
             'is_delete' => 'Is Delete',
             'created_at' => 'Created At',
             'updated_at' => 'Updated At',

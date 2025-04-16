@@ -48,14 +48,19 @@ AppAsset::register($this);
                         </li>
 
                         </li>
-                        <li class="sidebar-item">
+                        <!-- <li class="sidebar-item">
                             <a class="sidebar-link" href="<?= Url::toRoute(['category/index']) ?>">
                                 <i class="align-middle" data-feather="user"></i> <span class="align-middle">Category</span>
                             </a>
-                        </li>
+                        </li> -->
                         <li class="sidebar-item">
                             <a class="sidebar-link" href="<?= Url::toRoute(['product/index']) ?>">
                                 <i class="align-middle" data-feather="user"></i> <span class="align-middle">Product</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a class="sidebar-link" href="<?= Url::toRoute(['order-details/index']) ?>">
+                                <i class="align-middle" data-feather="user"></i> <span class="align-middle">Order Details</span>
                             </a>
                         </li>
                     </ul>
@@ -112,7 +117,7 @@ AppAsset::register($this);
                     <div class="row text-muted">
                         <div class="col-6 text-start">
                             <p class="mb-0">
-                                <a href="#" target="_blank" class="text-muted"><strong>FARMLANCER</strong></a> &copy;
+                                <a href="#" target="_blank" class="text-muted"><strong>PUREPETALS</strong></a> &copy;
                             </p>
                         </div>
                         <div class="col-6 text-end">

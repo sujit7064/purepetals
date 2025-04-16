@@ -3,21 +3,23 @@
 use yii\db\Migration;
 
 /**
- * Handles the creation of table `{{%registration}}`.
+ * Handles the creation of table `{{%cart_item}}`.
  */
-class m250308_172753_create_registration_table extends Migration
+class m240926_122206_create_cart_item_table extends Migration
 {
     /**
      * {@inheritdoc}
      */
     public function safeUp()
     {
-        $this->createTable('{{%registration}}', [
+        $this->createTable('{{%cart_item}}', [
             'id' => $this->primaryKey(),
-            'user_id' => $this->integer()->notNull(),
-            'name' => $this->string(255)->notNull(),
-            'phone_number' => $this->bigInteger(20)->notNull(),
-            'email' => $this->string(255)->notNull(),
+            'buyer_id' => $this->integer()->notNull(),
+            'product_id' => $this->integer()->notNull(),
+            'product_quantity' => $this->float()->notNull(),
+            'order_date' =>  $this->string()->notNull(),
+            'product_price' => $this->float()->notNull(),
+            'total_amount' => $this->float()->notNull(),
             'is_delete' => $this->integer()->notNull()->defaultValue(0),
             'created_at' => $this->dateTime()->notNull()->defaultExpression('CURRENT_TIMESTAMP'),
             'updated_at' => $this->dateTime()->notNull()->defaultExpression('CURRENT_TIMESTAMP')->append('ON UPDATE CURRENT_TIMESTAMP'),
@@ -29,6 +31,6 @@ class m250308_172753_create_registration_table extends Migration
      */
     public function safeDown()
     {
-        $this->dropTable('{{%registration}}');
+        $this->dropTable('{{%cart_item}}');
     }
 }
