@@ -58,57 +58,77 @@ class ApiController extends Controller
     {
         $rest = array();
         $message = '';
+        $status = 0;
+        $data = [];
 
+        // Fetch POST data
         $phone_number = Yii::$app->request->post('phone_number');
         $password = Yii::$app->request->post('password');
-        $hash =  Yii::$app->getSecurity()->generatePasswordHash($password);
+        $hash = Yii::$app->getSecurity()->generatePasswordHash($password);
         $name = Yii::$app->request->post('name');
         $email = Yii::$app->request->post('email');
 
-
+        // Start a transaction to ensure rollback in case of error
         $transaction = Yii::$app->db->beginTransaction();
 
         try {
-            if ($phone_number != '' && $password != ''  && $name != '') {
-
-                $usermodel = User::find()->where(['username' => $phone_number])->one();
-                if ($usermodel) {
-                    throw new \Exception('Phone Number Already Exist');
-                    $status = 0;
-                }
-                $user_model = new User();
-                $user_model->username = $phone_number;
-                $user_model->password_hash = $hash;
-                $user_model->role_id = 2;
-                $user_model->status = 10;
-                $user_model->email = $email;
-
-                if ($user_model->save()) {
-                    $registration = new  Registration();
-                    $registration->user_id = $user_model->id;
-                    $registration->name = $name;
-                    $registration->phone_number = $phone_number;
-                    $registration->email = $email;
-                    $registration->save();
-                    $message = "Registration Successful";
-                    $status = 1;
-                } else {
-                    $message = "Ooops! Something Went Wrong";
-                    $status = 0;
-                }
-            } else {
-                throw new \Exception('Please fill up all field');
-                $status = 0;
+            // Validate input fields
+            if (empty($phone_number) || empty($password) || empty($name)) {
+                throw new \Exception('Please fill up all fields');
             }
+
+            // Check if phone number already exists
+            $usermodel = User::find()->where(['username' => $phone_number])->one();
+            if ($usermodel) {
+                throw new \Exception('Phone Number Already Exists');
+            }
+            $usermodel = User::find()->where(['email' => $email])->one();
+            if ($usermodel) {
+                throw new \Exception('This email Already Exists');
+            }
+
+            // Create new User record
+            $user_model = new User();
+            $user_model->username = $phone_number;
+            $user_model->password_hash = $hash;
+            $user_model->role_id = 2;
+            $user_model->status = 10;  // You can adjust this based on your needs (active/inactive)
+            $user_model->email = $email;
+
+            if ($user_model->save()) {
+                // Create Registration record
+                $registration = new Registration();
+                $registration->user_id = $user_model->id;
+                $registration->name = $name;
+                $registration->phone_number = $phone_number;
+                $registration->email = $email;
+                $registration->save();
+
+                // Success response
+                $message = "Registration Successful";
+                $status = 1;
+                $data = [
+                    'user_id' => $user_model->id,
+                    'role_id' => $user_model->role_id,
+                    'phone_number' => $user_model->username,
+                    'email' => $user_model->email,
+                ];
+            } else {
+                throw new \Exception('Oops! Something Went Wrong while saving user data');
+            }
+
+            // Commit the transaction
             $transaction->commit();
         } catch (\Exception $e) {
+            // Rollback the transaction in case of error
             $transaction->rollBack();
             $message = $e->getMessage();
-            $status = 0;
         }
 
+        // Return response
         $rest['message'] = $message;
         $rest['status'] = $status;
+        $rest['data'] = $data;
 
         return $this->asJson($rest);
     }
