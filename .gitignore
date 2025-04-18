@@ -41,3 +41,12 @@ phpunit.phar
 /backend/web/index.php
 /backend/web/index-test.php
 /backend/web/robots.txt
+
+/storage
+/composer.lock
+/common/config/bootstrap.php
+/common/config/main-local.php
+/.htaccess
+/backend/web/.htaccess
+/frontend/web/.htaccess
+
