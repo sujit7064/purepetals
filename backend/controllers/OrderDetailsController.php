@@ -41,11 +41,15 @@ class OrderDetailsController extends Controller
         $searchModel = new OrderDetailsSearch();
         $dataProvider = $searchModel->search($this->request->queryParams);
 
+        $orderDetails = OrderDetails::find()->all(); // all records without filter
+
         return $this->render('index', [
             'searchModel' => $searchModel,
             'dataProvider' => $dataProvider,
+            'orderDetails' => $orderDetails,
         ]);
     }
+
 
     /**
      * Displays a single OrderDetails model.
@@ -149,5 +153,17 @@ class OrderDetailsController extends Controller
             'payment' => $orders[0]->payment,
             'buyer' => $orders[0]->buyer,
         ]);
+    }
+
+    public function actionChangeStatus($paymentdetails_id)
+    {
+        $orders = OrderDetails::find()->where(['paymentdetails_id' => $paymentdetails_id])->all();
+
+        foreach ($orders as $order) {
+            $order->order_status = 1;
+            $order->save(false);
+        }
+
+        return $this->redirect(['index']);
     }
 }
