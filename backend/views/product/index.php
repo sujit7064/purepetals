@@ -52,7 +52,7 @@ $this->params['breadcrumbs'][] = $this->title;
             ],
             'price',
             'quantity',
-            //'status',
+            'description',
             [
                 'class' => ActionColumn::className(),
                 'urlCreator' => function ($action, Product $model, $key, $index, $column) {

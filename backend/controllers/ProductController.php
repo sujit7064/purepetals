@@ -70,6 +70,7 @@ class ProductController extends Controller
     public function actionCreate()
     {
         $model = new Product();
+        $model->scenario = 'create';
 
         if ($this->request->isPost) {
             if ($model->load($this->request->post())) {
@@ -109,21 +110,38 @@ class ProductController extends Controller
         $model = $this->findModel($id);
         $oldImage = $model->image;
 
+        // Set scenario for validation (optional image on update)
+        $model->scenario = 'update';
+
         if ($this->request->isPost && $model->load($this->request->post())) {
             $image = UploadedFile::getInstance($model, 'image');
-            if ($image !== null) {
-                $path =  $image->baseName . '_' . date('Y-m-d') . '.' . $image->extension;
-                $img = Yii::getAlias('@storage') . '/images/' . $path;
 
-                if ($image->saveAs($img)) {
+            if ($image !== null) {
+                // Generate a new image file name
+                $path = $image->baseName . '_' . date('Y-m-d') . '.' . $image->extension;
+
+                // Destination path (make sure @storage alias is set)
+                $imgPath = Yii::getAlias('@storage') . '/images/' . $path;
+
+                if ($image->saveAs($imgPath)) {
+                    // Save the new image name in model
                     $model->image = $path;
-                    if ($oldImage && file_exists(Yii::getAlias('@storage') . '/images/' . $oldImage)) {
-                        unlink(Yii::getAlias('@storage') . '/images/' . $oldImage);
+
+                    // Remove the old image file if it exists
+                    $oldImagePath = Yii::getAlias('@storage') . '/images/' . $oldImage;
+                    if ($oldImage && file_exists($oldImagePath)) {
+                        @unlink($oldImagePath);
                     }
+                } else {
+                    Yii::error("Failed to save uploaded image to: $imgPath", __METHOD__);
+                    $model->image = $oldImage; // fallback to old image
                 }
             } else {
+                // No new image uploaded, keep old image
                 $model->image = $oldImage;
             }
+
+            // Save the model
             if ($model->save()) {
                 return $this->redirect(['index', 'id' => $model->id]);
             }
@@ -133,6 +151,7 @@ class ProductController extends Controller
             'model' => $model,
         ]);
     }
+
 
     /**
      * Deletes an existing Product model.
