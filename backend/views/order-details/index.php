@@ -2,6 +2,8 @@
 
 use yii\helpers\Html;
 use yii\helpers\Url;
+use app\models\OrderDetails;
+use common\models\OrderDetails as ModelsOrderDetails;
 
 $this->title = 'Order Details Batch Wise';
 $this->params['breadcrumbs'][] = $this->title;
@@ -30,80 +32,84 @@ $this->params['breadcrumbs'][] = $this->title;
     }
     ?>
 
-    <?php foreach ($grouped as $paymentId => $batch): ?>
-        <div class="card mb-4">
-            <div class="card-header">
-                <strong>Batch No <?= Html::encode($paymentId) ?> (Payment ID: <?= Html::encode($paymentId) ?>)</strong>
-            </div>
-            <div class="card-body">
-                <table class="table table-bordered">
-                    <thead>
+    <?php
+    $currentPaymentId = null;
+
+    foreach ($orderDetails as $order):
+        // Grouping header when payment ID changes
+        if ($currentPaymentId !== $order->paymentdetails_id):
+            $currentPaymentId = $order->paymentdetails_id;
+    ?>
+            <div class="card my-4">
+                <div class="card-header bg-light">
+                    <strong>🧾 Payment ID: <?= Html::encode($order->paymentdetails_id) ?></strong>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-striped table-bordered mb-0">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th>Buyer</th>
+                                <th>Phone</th>
+                                <th>Product</th>
+                                <th>Qty</th>
+                                <th>Address</th>
+                                <th>Date</th>
+                                <th>Total</th>
+                                <th>Invoice</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        <?php endif; ?>
                         <tr>
-                            <th>Buyer Name</th>
-                            <th>Phone Number</th>
-                            <th>Products & Quantities</th>
-                            <th>Address</th>
-                            <th>Order Date</th>
-                            <th>Total Paid Amount</th>
-                            <th>Invoice</th>
-                            <th>Status</th> <!-- Added Status Column -->
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><?= Html::encode($batch['buyer_name']) ?></td>
-                            <td><?= Html::encode($batch['phone_number']) ?></td>
-                            <td>
-                                <?php foreach ($batch['products'] as $product): ?>
-                                    <?= Html::encode($product['product_name']) ?> (Qty: <?= Html::encode($product['quantity']) ?>)<br>
-                                <?php endforeach; ?>
-                            </td>
+                            <td><?= Html::encode($order->buyer->name ?? 'N/A') ?></td>
+                            <td><?= Html::encode($order->buyer->phone_number ?? 'N/A') ?></td>
+                            <td><?= Html::encode($order->product->product_name ?? 'N/A') ?></td>
+                            <td><?= Html::encode($order->product_quantity) ?></td>
                             <td>
                                 <?php
-                                if ($batch['address']) {
-                                    echo "Address: " . Html::encode($batch['address']->address) . "<br>";
-                                    echo "Dist: " . Html::encode($batch['address']->dist) . "<br>";
-                                    echo "City: " . Html::encode($batch['address']->city) . "<br>";
-                                    echo "State: " . Html::encode($batch['address']->state) . "<br>";
-                                    echo "Pincode: " . Html::encode($batch['address']->pincode);
+                                if ($order->address) {
+                                    echo "Address: " . Html::encode($order->address->address) . "<br>";
+                                    echo "Dist: " . Html::encode($order->address->dist) . "<br>";
+                                    echo "City: " . Html::encode($order->address->city) . "<br>";
+                                    echo "State: " . Html::encode($order->address->state) . "<br>";
+                                    echo "Pincode: " . Html::encode($order->address->pincode);
                                 } else {
                                     echo "N/A";
                                 }
                                 ?>
                             </td>
-                            <td><?= Html::encode($batch['order_date']) ?></td>
-                            <td><?= Html::encode($batch['total_paid_amount']) ?></td>
+                            <td><?= Html::encode($order->order_date) ?></td>
+                            <td><?= Html::encode($order->total_amount) ?></td>
                             <td>
-                                <?= Html::a('🧾 Invoice', ['invoice', 'paymentdetails_id' => $paymentId], [
-                                    'class' => 'btn btn-sm btn-primary',
-                                    'target' => '_blank',
-                                    'title' => 'Download Invoice'
+                                <?= Html::a('Invoice', ['invoice', 'paymentdetails_id' => $order->paymentdetails_id], [
+                                    'class' => 'btn btn-sm btn-secondary',
+                                    'target' => '_blank'
                                 ]) ?>
                             </td>
                             <td>
-                                <?php
-                                // Show status button for paymentdetails_id
-                                $allStatuses = array_column($batch['status'], 'order_status');
-                                if (in_array(0, $allStatuses)) { // If any Pending exists
-                                    echo Html::a('Pending', ['change-status', 'paymentdetails_id' => $paymentId], [
-                                        'class' => 'btn btn-warning btn-sm',
-                                        'data' => [
-                                            'confirm' => 'Are you sure you want to mark ALL as Delivered?',
-                                            'method' => 'post',
-                                        ],
-                                    ]);
-                                } else {
-                                    echo Html::button('Delivered', [
-                                        'class' => 'btn btn-success btn-sm',
-                                        'disabled' => true,
-                                    ]);
-                                }
-                                ?>
+                                <strong><?= \common\models\OrderDetails::STATUSES[$order->order_status] ?? 'Unknown' ?></strong><br>
+                                <?= Html::beginForm(['change-status-single', 'id' => $order->id], 'post', ['style' => 'margin-top:5px']) ?>
+                                <?= Html::dropDownList('status', null, \common\models\OrderDetails::STATUSES, [
+                                    'class' => 'form-control form-control-sm',
+                                    'prompt' => 'Change status'
+                                ]) ?>
+                                <?= Html::submitButton('Update', ['class' => 'btn btn-primary btn-sm mt-1']) ?>
+                                <?= Html::endForm() ?>
                             </td>
                         </tr>
-                    </tbody>
-                </table>
+                        <?php
+                        // If next order is different payment or end of list, close the table and card
+                        $nextOrder = next($orderDetails);
+                        if (!$nextOrder || $nextOrder->paymentdetails_id !== $currentPaymentId):
+                        ?>
+                        </tbody>
+                    </table>
+                </div>
             </div>
-        </div>
-    <?php endforeach; ?>
+    <?php
+                        endif;
+                    endforeach;
+    ?>
+
 </div>

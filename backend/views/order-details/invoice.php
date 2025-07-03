@@ -3,86 +3,80 @@
 use yii\helpers\Html;
 
 $this->title = 'Invoice';
+
 ?>
 <style>
-    /* Page Setup for 4x6 inches */
     @page {
         size: 4in 6in;
-        /* Set page size to 4x6 inches */
         margin: 0;
-        /* Remove default margin */
     }
 
     body {
         font-family: Arial, sans-serif;
+        font-size: 11px;
         color: #333;
         margin: 0;
         padding: 0;
     }
 
     .invoice-box {
+        padding: 10px;
         width: 100%;
         height: 100%;
-        padding: 10px;
-        font-size: 12px;
-        /* Font size optimized for small print size */
-        line-height: 18px;
         background: #fff;
     }
 
-    .invoice-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
+    .seller-info,
+    .info,
+    .shipping-info,
+    .invoice-meta,
+    .invoice-footer {
         margin-bottom: 10px;
     }
 
-    .invoice-header img {
-        width: 50px;
-        /* Smaller logo for compact format */
-        height: auto;
-    }
-
-    .company-name {
-        font-size: 16px;
-        font-weight: bold;
-        color: #2d2d2d;
+    .seller-info {
+        text-align: center;
+        font-size: 10px;
     }
 
     .invoice-box table {
         width: 100%;
         border-collapse: collapse;
         font-size: 10px;
-        /* Adjusted table font size */
     }
 
     .invoice-box table td {
         padding: 4px;
-        /* Reduced padding for compact layout */
         vertical-align: top;
+        text-align: center;
     }
 
     .invoice-box table tr.heading td {
         background: #eee;
         font-weight: bold;
         border-bottom: 1px solid #ddd;
-        text-align: center;
     }
 
     .invoice-box table tr.item td {
         border-bottom: 1px solid #eee;
-        text-align: center;
     }
 
     .invoice-footer {
-        margin-top: 10px;
+        font-size: 9px;
         text-align: center;
+        border-top: 1px dashed #aaa;
+        padding-top: 5px;
     }
 
-    .invoice-box .info {
-        margin-bottom: 10px;
-        font-size: 10px;
-        /* Reduced font size for info section */
+    h2 {
+        text-align: center;
+        margin: 8px 0;
+    }
+
+    .invoice-header img {
+        display: block;
+        margin: 0 auto;
+        width: 40px;
     }
 
     @media print {
@@ -91,77 +85,82 @@ $this->title = 'Invoice';
         }
 
         body {
-            font-size: 12px;
-            /* Ensure smaller font for print */
-        }
-
-        .invoice-box {
-            padding: 10px;
-            /* Reduce padding for small print area */
-        }
-
-        .invoice-box table td {
-            padding: 4px;
-            /* Further reduced padding */
-        }
-
-        .invoice-header img {
-            width: 40px;
-            /* Further reduce logo size for print */
-        }
-
-        .invoice-box .info {
-            font-size: 9px;
-            /* Even smaller font for print */
+            font-size: 10px;
         }
     }
 </style>
 
 <div class="invoice-box">
     <div class="invoice-header">
-        <?php
-        $img = Yii::getAlias('@storageUrl') . '/images/logo.png';
-        ?>
-        <img src="<?php echo $img; ?>" alt="Company Logo">
-        <!-- <div class="company-name">PurePetal</div> -->
+        <?php $img = Yii::getAlias('@storageUrl') . '/images/logo.png'; ?>
+        <img src="<?= $img ?>" alt="Company Logo">
     </div>
 
-    <h2 style="text-align:center; margin-bottom: 10px;">Invoice</h2>
+    <div class="seller-info">
+        <strong>PurePetal Enterprises</strong><br>
+        GSTIN: 27ABCDE1234F1Z5<br>
+        123 Business Park, Sector 21, Mumbai, Maharashtra - 400001<br>
+        Email: support@purepetal.in | Phone: +91-9000000000
+    </div>
+
+    <h2>Invoice</h2>
+
+    <div class="invoice-meta">
+        <p><strong>Invoice No:</strong> <?= Html::encode($payment->invoice_number ?? 'INV' . $payment->id) ?> &nbsp; | &nbsp;
+            <strong>Invoice Date:</strong> <?= date('d-M-Y') ?>
+        </p>
+        <p><strong>Order ID:</strong> <?= Html::encode($payment->order_reference ?? $payment->id) ?></p>
+    </div>
 
     <div class="info">
-        <p><strong>Buyer:</strong> <?= Html::encode($buyer->name) ?> &nbsp;&nbsp; | &nbsp;&nbsp; <strong>Phone:</strong> <?= Html::encode($buyer->phone_number) ?></p>
-        <p><strong>Transaction ID:</strong> <?= Html::encode($payment->transaction_id) ?></p>
-        <p><strong>Payment Method:</strong> <?= Html::encode($payment->payment_method) ?> &nbsp;&nbsp; | &nbsp;&nbsp; <strong>Status:</strong> <?= Html::encode($payment->payment_status) ?></p>
-        <p><strong>Total Paid:</strong> ₹<?= Html::encode($payment->total_amount) ?></p>
+        <p><strong>Buyer:</strong> <?= Html::encode($buyer->name) ?> &nbsp; | &nbsp;
+            <strong>Phone:</strong> <?= Html::encode($buyer->phone_number) ?>
+        </p>
+        <p><strong>Payment Method:</strong> <?= Html::encode($payment->payment_method) ?> &nbsp; | &nbsp;
+            <strong>Status:</strong> <?= Html::encode($payment->payment_status) ?>
+        </p>
+    </div>
+
+    <div class="shipping-info">
+        <strong>Shipping Address:</strong><br>
+        <?= Html::encode($buyer->name) ?><br>
+        <?php if (!empty($orders[0]->address)): ?>
+            <?= Html::encode($orders[0]->address->address) ?><br>
+            <?= Html::encode("{$orders[0]->address->city}, {$orders[0]->address->dist}, {$orders[0]->address->state} - {$orders[0]->address->pincode}") ?><br>
+            Phone: <?= Html::encode($buyer->phone_number) ?>
+        <?php else: ?>
+            Address not available
+        <?php endif; ?>
     </div>
 
     <table>
         <tr class="heading">
             <td>Product</td>
-            <td>Quantity</td>
-            <td>Amount</td>
-            <td>Address</td>
-            <td>Order Date</td>
+            <td>Qty</td>
+            <td>Unit Price</td>
+            <td>Total</td>
         </tr>
 
         <?php foreach ($orders as $order): ?>
             <tr class="item">
                 <td><?= Html::encode($order->product->product_name) ?></td>
                 <td><?= Html::encode($order->product_quantity) ?></td>
-                <td>₹<?= Html::encode($order->total_amount) ?></td>
-                <td>
-                    <?php if ($order->address): ?>
-                        <?= Html::encode("{$order->address->address}, {$order->address->city}, {$order->address->dist}, {$order->address->state} - {$order->address->pincode}") ?>
-                    <?php else: ?>
-                        N/A
-                    <?php endif; ?>
-                </td>
-                <td><?= Yii::$app->formatter->asDatetime($order->order_date, 'php:d-M-Y') ?></td>
+                <td>₹<?= Html::encode(number_format($order->total_amount / $order->product_quantity, 2)) ?></td>
+                <td>₹<?= Html::encode(number_format($order->total_amount, 2)) ?></td>
             </tr>
         <?php endforeach; ?>
     </table>
 
+    <div class="info" style="text-align:right; font-weight:bold; margin-top:8px;">
+        Total Paid: ₹<?= Html::encode(number_format($payment->total_amount, 2)) ?>
+    </div>
+
+    <div class="invoice-footer">
+        This is a computer-generated invoice. No signature required.<br>
+        Returns accepted within 7 days of delivery. Visit <strong>www.purepetal.in</strong> for support.
+    </div>
+
     <div class="invoice-footer no-print">
-        <button onclick="window.print()" class="btn btn-primary" style="margin-top: 10px;">🖨️ Print Invoice</button>
+        <button onclick="window.print()" class="btn btn-primary" style="margin-top: 8px;">🖨️ Print Invoice</button>
     </div>
 </div>

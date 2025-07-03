@@ -35,13 +35,25 @@ class Product extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['category_id', 'quantity', 'updated_at'], 'default', 'value' => null],
+            [['category_id', 'quantity', 'description', 'updated_at'], 'default', 'value' => null],
             [['is_delete', 'status'], 'default', 'value' => 0],
             [['category_id', 'quantity', 'status', 'is_delete'], 'integer'],
-            [['product_name', 'price', 'image'], 'required'],
+
+            [['product_name', 'price'], 'required'],
+            [['image'], 'required', 'on' => 'create'], // only required on create
+            [['image'], 'file', 'extensions' => 'png, jpg, jpeg'],
+
             [['created_at', 'updated_at'], 'safe'],
             [['product_name'], 'string', 'max' => 255],
         ];
+    }
+
+    public function scenarios()
+    {
+        $scenarios = parent::scenarios();
+        $scenarios['create'] = ['category_id', 'quantity', 'description', 'price', 'image', 'product_name'];
+        $scenarios['update'] = ['category_id', 'quantity', 'description', 'price', 'image', 'product_name'];
+        return $scenarios;
     }
 
     /**
