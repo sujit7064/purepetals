@@ -55,5 +55,4 @@ class Category extends \yii\db\ActiveRecord
             'is_delete' => 'Is Delete',
         ];
     }
-
 }
