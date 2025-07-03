@@ -85,4 +85,22 @@ class OrderDetails extends \yii\db\ActiveRecord
     {
         return $this->hasOne(PaymentDetails::className(), ['id' => 'paymentdetails_id']);
     }
+
+    const STATUSES = [
+        0 => 'Pending',
+        1 => 'Confirmed',
+        2 => 'Processing',
+        3 => 'Shipped',
+        4 => 'Out for Delivery',
+        5 => 'Delivered',
+        6 => 'Return Requested',
+        7 => 'Return Approved',
+        8 => 'Return Initiated',
+        9 => 'Return In Transit',
+        10 => 'Return Received',
+        11 => 'Refund Processed',
+        12 => 'Cancelled by Customer',
+        13 => 'Cancelled by Admin',
+        14 => 'Failed Delivery',
+    ];
 }

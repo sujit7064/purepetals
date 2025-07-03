@@ -7,6 +7,7 @@ use common\models\OrderDetailsSearch;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
+use yii;
 
 /**
  * OrderDetailsController implements the CRUD actions for OrderDetails model.
@@ -155,14 +156,22 @@ class OrderDetailsController extends Controller
         ]);
     }
 
-    public function actionChangeStatus($paymentdetails_id)
+    public function actionChangeStatusSingle($id)
     {
-        $orders = OrderDetails::find()->where(['paymentdetails_id' => $paymentdetails_id])->all();
+        $status = Yii::$app->request->post('status');
 
-        foreach ($orders as $order) {
-            $order->order_status = 1;
-            $order->save(false);
+        if ($status === null) {
+            throw new \yii\web\BadRequestHttpException('Missing status parameter.');
         }
+
+        $order = OrderDetails::findOne($id);
+
+        if (!$order) {
+            throw new NotFoundHttpException('Order not found.');
+        }
+
+        $order->order_status = $status;
+        $order->save(false);
 
         return $this->redirect(['index']);
     }

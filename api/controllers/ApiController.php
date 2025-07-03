@@ -187,7 +187,8 @@ class ApiController extends Controller
                     'product_id' => $product->id,
                     'product_name' => $product->product_name,
                     'image' => Yii::getAlias('@storageUrl') . '/images/'  . $product->image,
-                    'price' => $product->price
+                    'price' => $product->price,
+                    'description' => $product->description
                 ];
             }
         } else {
@@ -465,7 +466,7 @@ class ApiController extends Controller
         }
 
         $orders = OrderDetails::find()
-            ->where(['buyer_id' => $buyer_id, 'order_status' => 1])
+            ->where(['buyer_id' => $buyer_id, 'is_delete' => 0])
             ->orderBy(['created_at' => SORT_DESC])
             ->all();
 
@@ -475,13 +476,15 @@ class ApiController extends Controller
                 $products = Product::find()->where(['id' => $order->product_id, 'is_delete' => 0])->one();
 
                 $details['orders'][] = [
-                    //'id' => $order->id,
+                    'id' => $order->id,
                     'image' => Yii::getAlias('@storageUrl') . '/images/'  . $products->image,
                     'product_quantity' => $order->product_quantity,
                     //'paymentdetails_id' => $order->paymentdetails_id,
                     //'address_id' => $order->address_id,
                     'total_amount' => $order->total_amount,
-                    'order_date' => $order->order_date
+                    'order_date' => $order->order_date,
+                    'status' => OrderDetails::STATUSES[$order->order_status] ?? 'Unknown',
+                    'status_no' => $order->order_status ?? 'Unknown',
                 ];
             }
 
@@ -663,5 +666,27 @@ class ApiController extends Controller
             'message' => 'No address found for this user_id',
             'data' => [],
         ];
+    }
+
+
+    public function actionReturn()
+    {
+        $order_id = Yii::$app->request->post('order_id');
+
+        $order = OrderDetails::find()
+            ->where(['id' => $order_id, 'order_status' => 5, 'is_delete' => 0])
+            ->one();
+
+        if (!$order) {
+            return ['status' => 2, 'message' => 'Order not found or not eligible for return'];
+        }
+
+        $order->order_status = 6;
+
+        if ($order->save(false)) {
+            return ['status' => 1, 'message' => 'Order marked as returned'];
+        } else {
+            return ['status' => 0, 'message' => 'Failed to update order status'];
+        }
     }
 }
