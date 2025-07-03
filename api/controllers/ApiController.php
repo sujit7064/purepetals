@@ -631,37 +631,4 @@ class ApiController extends Controller
             ]);
         }
     }
-
-    public function actionUserAddresses()
-    {
-        $user_id = Yii::$app->request->post('user_id');
-
-        if (!$user_id) {
-            return [
-                'status' => 0,
-                'message' => 'user_id is required',
-            ];
-        }
-
-        $addresses = AddressDetails::find()
-            ->select(['address', 'dist', 'city', 'state', 'pincode'])
-            ->where(['user_id' => $user_id])
-            ->asArray()
-            ->all();
-
-        if (!empty($addresses)) {
-            return [
-                'status' => 1,
-                'message' => 'Addresses found',
-                'count' => count($addresses),
-                'data' => $addresses,
-            ];
-        }
-
-        return [
-            'status' => 0,
-            'message' => 'No address found for this user_id',
-            'data' => [],
-        ];
-    }
 }
