@@ -20,10 +20,9 @@ use yii\widgets\ActiveForm;
 
     <?= $form->field($model, 'multiple_image[]')->fileInput(['multiple' => true]) ?>
 
+    <?= $form->field($model, 'final_price')->textInput(['type' => 'number', 'min' => 0])->label('Cut Price') ?>
 
     <?= $form->field($model, 'price')->textInput(['type' => 'number', 'min' => 0]) ?>
-
-    <?= $form->field($model, 'final_price')->textInput(['type' => 'number', 'min' => 0]) ?>
 
     <?= $form->field($model, 'quantity')->textInput() ?>
 

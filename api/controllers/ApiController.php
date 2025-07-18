@@ -199,7 +199,7 @@ class ApiController extends Controller
                     'product_name'   => $product->product_name,
                     'image'          => Yii::getAlias('@storageUrl') . '/images/' . $product->image,
                     'price'          => $product->price,
-                    'final_price'    => $product->final_price,
+                    'cut_price'    => $product->final_price,
                     'description'    => $product->description,
                     'multiple_image' => $multipleImages,
                 ];
@@ -314,7 +314,7 @@ class ApiController extends Controller
                 foreach ($cartItems as $item) {
                     $buyer_name = Registration::find()->where(['user_id' => $item->buyer_id])->one();
                     $image = Product::find()->where(['id' => $item->product_id])->one();
-                    $imagee =  $image->image;
+                    $imagee = $image ? $image->image : null;
                     $fullImageUrl = $imagee ?  Yii::getAlias('@storageUrl') . '/images/' . $imagee : '';
 
                     $cartDetails['cart_items'][] = [
