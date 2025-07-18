@@ -7,7 +7,7 @@ Yii::setAlias('@storage', dirname(dirname(__DIR__)) . '/storage');
 Yii::setAlias('@api', dirname(dirname(__DIR__)) . '/api');
 
 $web_protocol = $_SERVER['PROTOCOL'] = isset($_SERVER['HTTPS']) && !empty($_SERVER['HTTPS']) ? 'https' : 'http';
-$project_folder_name = '/purepetal';
+$project_folder_name = '/';
 Yii::setAlias('@project_folder_name', $project_folder_name);
 
 Yii::setAlias('@frontendUrl', $web_protocol . "://" . $_SERVER['SERVER_NAME'] . $project_folder_name . "");

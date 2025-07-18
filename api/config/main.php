@@ -14,7 +14,7 @@ return [
     'components' => [
         'request' => [
             //'baseUrl' => Yii::getAlias('@project_folder_name') . '/api',
-            'baseUrl' => '/purepetal/api',
+            'baseUrl' => '/api',
             'parsers' => [
                 'application/json' => 'yii\web\JsonParser'
             ],

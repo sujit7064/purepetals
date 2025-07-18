@@ -11,18 +11,22 @@ Options +FollowSymlinks
 RewriteEngine On
 RewriteBase /
 
+# ✅ FIX: Redirect /backend to /backend/
+RewriteCond %{REQUEST_URI} ^/backend$
+RewriteRule ^backend$ /backend/ [R=301,L]
+
 # Backend redirect
-RewriteCond %{REQUEST_URI} ^/purepetal/backend
-RewriteRule ^backend/(.*)$ purepetal/backend/web/$1 [L]
+RewriteCond %{REQUEST_URI} ^/backend
+RewriteRule ^backend/(.*)$ /backend/web/$1 [L]
 
 # # blogger redirect
-RewriteCond %{REQUEST_URI} ^/purepetal/api
-RewriteRule ^api/(.*)$ purepetal/api/web/$1 [L]
+RewriteCond %{REQUEST_URI} ^/api
+RewriteRule ^api/(.*)$ /api/web/$1 [L]
 
 # # Storage redirect
 # RewriteCond %{REQUEST_URI} ^/bima_facts/store
 # RewriteRule ^storage/(.*)$ bima_facts/storage/$1 [L]
 
 # Frontend redirect
-RewriteCond %{REQUEST_URI} ^/purepetal/(.*)$
-RewriteRule ^(.*)$ purepetal/frontend/web/$1
+RewriteCond %{REQUEST_URI} ^/(.*)$
+RewriteRule ^(.*)$ /frontend/web/$1

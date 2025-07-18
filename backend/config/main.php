@@ -15,7 +15,7 @@ return [
     'components' => [
         'request' => [
             'csrfParam' => '_csrf-backend',
-            'baseUrl' => '/purepetal/backend',
+            'baseUrl' => '/backend',
         ],
         'user' => [
             'identityClass' => 'common\models\User',

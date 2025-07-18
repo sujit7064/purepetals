@@ -46,7 +46,10 @@ phpunit.phar
 /composer.lock
 /common/config/bootstrap.php
 /common/config/main-local.php
-/.htaccess
+/frontend/config/main.php
+/backend/config/main.php
+.htaccess
 /backend/web/.htaccess
 /frontend/web/.htaccess
+/copy.htaccess
 
