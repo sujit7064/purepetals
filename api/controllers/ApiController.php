@@ -634,8 +634,6 @@ class ApiController extends Controller
             ]);
         }
     }
-<<<<<<< HEAD
-=======
 
     public function actionUserAddresses()
     {
@@ -691,5 +689,4 @@ class ApiController extends Controller
             return ['status' => 0, 'message' => 'Failed to update order status'];
         }
     }
->>>>>>> 642e2c296b9fa75320c1143f00908ff02296e918
 }
