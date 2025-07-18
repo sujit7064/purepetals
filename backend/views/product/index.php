@@ -50,8 +50,11 @@ $this->params['breadcrumbs'][] = $this->title;
                     }
                 }
             ],
+            [
+                'attribute' => 'final_price',
+                'label' => 'Cut Price',
+            ],
             'price',
-            'final_price',
             'quantity',
             'description',
             [
