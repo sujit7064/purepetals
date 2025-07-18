@@ -181,26 +181,41 @@ class ApiController extends Controller
 
         if ($products) {
             foreach ($products as $product) {
-                $message = " List available";
+                $message = "List available";
                 $status = 1;
+
+                // Decode multiple_image JSON (if not null)
+                $multipleImages = [];
+                $filenames = json_decode($product->multiple_image, true);
+
+                if (is_array($filenames)) {
+                    foreach ($filenames as $filename) {
+                        $multipleImages[] = Yii::getAlias('@storageUrl') . '/images/' . $filename;
+                    }
+                }
+
                 $data[] = [
-                    'product_id' => $product->id,
-                    'product_name' => $product->product_name,
-                    'image' => Yii::getAlias('@storageUrl') . '/images/'  . $product->image,
-                    'price' => $product->price,
-                    'description' => $product->description
+                    'product_id'     => $product->id,
+                    'product_name'   => $product->product_name,
+                    'image'          => Yii::getAlias('@storageUrl') . '/images/' . $product->image,
+                    'price'          => $product->price,
+                    'final_price'    => $product->final_price,
+                    'description'    => $product->description,
+                    'multiple_image' => $multipleImages,
                 ];
             }
         } else {
             $message = "List not available";
             $status = 0;
         }
+
         $rest['message'] = $message;
         $rest['status'] = $status;
         $rest['data'] = $data;
 
         return $this->asJson($rest);
     }
+
 
     public function actionBannerproduct()
     {

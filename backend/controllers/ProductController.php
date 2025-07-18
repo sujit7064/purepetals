@@ -40,6 +40,7 @@ class ProductController extends Controller
      */
     public function actionIndex()
     {
+
         $searchModel = new ProductSearch();
         $dataProvider = $searchModel->search($this->request->queryParams);
 
@@ -74,19 +75,40 @@ class ProductController extends Controller
 
         if ($this->request->isPost) {
             if ($model->load($this->request->post())) {
-                if (UploadedFile::getInstance($model, 'image') != '') {
+
+                // Handle single image upload
+                if (UploadedFile::getInstance($model, 'image') !== null) {
                     $upload_image = UploadedFile::getInstance($model, 'image');
                     $baseName = str_replace(' ', '-', $upload_image->baseName);
-
                     $timestamp = date('Ymd-His');
                     $image = $baseName . '-' . $timestamp . '.' . $upload_image->extension;
                     $save_path = Yii::getAlias('@storage') . '/images/' . $image;
-
                     $upload_image->saveAs($save_path);
                     $model->image = $image;
-                    if ($model->save()) {
-                        return $this->redirect(['index']);
+                }
+
+                // Handle multiple images upload
+                $multipleImages = UploadedFile::getInstances($model, 'multiple_image');
+                $multipleImageNames = [];
+
+                if (!empty($multipleImages)) {
+                    foreach ($multipleImages as $file) {
+                        $baseName = str_replace(' ', '-', $file->baseName);
+                        $timestamp = date('Ymd-His') . '-' . rand(100, 999);
+                        $filename = $baseName . '-' . $timestamp . '.' . $file->extension;
+                        $filePath = Yii::getAlias('@storage') . '/images/' . $filename;
+
+                        if ($file->saveAs($filePath)) {
+                            $multipleImageNames[] = $filename;
+                        }
                     }
+                    // Save filenames as JSON or comma-separated string
+                    $model->multiple_image = json_encode($multipleImageNames); // or implode(',', $multipleImageNames);
+                }
+
+                // Save model
+                if ($model->save()) {
+                    return $this->redirect(['index']);
                 }
             }
         } else {
@@ -109,39 +131,56 @@ class ProductController extends Controller
     {
         $model = $this->findModel($id);
         $oldImage = $model->image;
+        $oldMultipleImages = $model->multiple_image;
 
-        // Set scenario for validation (optional image on update)
         $model->scenario = 'update';
 
         if ($this->request->isPost && $model->load($this->request->post())) {
+
+            // --- Handle Single Image ---
             $image = UploadedFile::getInstance($model, 'image');
-
             if ($image !== null) {
-                // Generate a new image file name
-                $path = $image->baseName . '_' . date('Y-m-d') . '.' . $image->extension;
-
-                // Destination path (make sure @storage alias is set)
+                $path = str_replace(' ', '-', $image->baseName) . '-' . date('Ymd-His') . '.' . $image->extension;
                 $imgPath = Yii::getAlias('@storage') . '/images/' . $path;
 
                 if ($image->saveAs($imgPath)) {
-                    // Save the new image name in model
                     $model->image = $path;
 
-                    // Remove the old image file if it exists
+                    // Remove old image
                     $oldImagePath = Yii::getAlias('@storage') . '/images/' . $oldImage;
                     if ($oldImage && file_exists($oldImagePath)) {
                         @unlink($oldImagePath);
                     }
                 } else {
-                    Yii::error("Failed to save uploaded image to: $imgPath", __METHOD__);
-                    $model->image = $oldImage; // fallback to old image
+                    $model->image = $oldImage;
                 }
             } else {
-                // No new image uploaded, keep old image
                 $model->image = $oldImage;
             }
 
-            // Save the model
+            // --- Handle Multiple Images ---
+            $multipleImages = UploadedFile::getInstances($model, 'multiple_image');
+            $multipleImageNames = [];
+
+            if (!empty($multipleImages)) {
+                foreach ($multipleImages as $file) {
+                    $baseName = str_replace(' ', '-', $file->baseName);
+                    $timestamp = date('Ymd-His') . '-' . rand(100, 999);
+                    $filename = $baseName . '-' . $timestamp . '.' . $file->extension;
+                    $filePath = Yii::getAlias('@storage') . '/images/' . $filename;
+
+                    if ($file->saveAs($filePath)) {
+                        $multipleImageNames[] = $filename;
+                    }
+                }
+
+                // Save new images list
+                $model->multiple_image = json_encode($multipleImageNames);
+            } else {
+                // Keep old multiple image JSON
+                $model->multiple_image = $oldMultipleImages;
+            }
+
             if ($model->save()) {
                 return $this->redirect(['index', 'id' => $model->id]);
             }
@@ -151,6 +190,7 @@ class ProductController extends Controller
             'model' => $model,
         ]);
     }
+
 
 
     /**
