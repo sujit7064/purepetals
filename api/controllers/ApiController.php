@@ -489,10 +489,14 @@ class ApiController extends Controller
             $details = [];
             foreach ($orders as $order) {
                 $products = Product::find()->where(['id' => $order->product_id, 'is_delete' => 0])->one();
+                $imageUrl = null;
+                if ($products && $products->image) {
+                    $imageUrl = Yii::getAlias('@storageUrl') . '/images/' . $products->image;
+                }
 
                 $details['orders'][] = [
                     'id' => $order->id,
-                    'image' => Yii::getAlias('@storageUrl') . '/images/'  . $products->image,
+                    'image' => $imageUrl,
                     'product_quantity' => $order->product_quantity,
                     //'paymentdetails_id' => $order->paymentdetails_id,
                     //'address_id' => $order->address_id,
