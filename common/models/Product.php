@@ -39,9 +39,10 @@ class Product extends \yii\db\ActiveRecord
             [['is_delete', 'status'], 'default', 'value' => 0],
             [['category_id', 'quantity', 'status', 'is_delete'], 'integer'],
 
-            [['product_name', 'price'], 'required'],
+            [['product_name', 'price', 'final_price'], 'required'],
             [['image'], 'required', 'on' => 'create'], // only required on create
             [['image'], 'file', 'extensions' => 'png, jpg, jpeg'],
+            [['multiple_image'], 'file', 'extensions' => 'png, jpg, jpeg', 'maxFiles' => 10],
 
             [['created_at', 'updated_at'], 'safe'],
             [['product_name'], 'string', 'max' => 255],
@@ -51,8 +52,8 @@ class Product extends \yii\db\ActiveRecord
     public function scenarios()
     {
         $scenarios = parent::scenarios();
-        $scenarios['create'] = ['category_id', 'quantity', 'description', 'price', 'image', 'product_name'];
-        $scenarios['update'] = ['category_id', 'quantity', 'description', 'price', 'image', 'product_name'];
+        $scenarios['create'] = ['category_id', 'quantity', 'description', 'price', 'image', 'product_name', 'multiple_image', 'final_price'];
+        $scenarios['update'] = ['category_id', 'quantity', 'description', 'price', 'image', 'product_name', 'multiple_image', 'final_price'];
         return $scenarios;
     }
 

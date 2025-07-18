@@ -51,8 +51,40 @@ $this->params['breadcrumbs'][] = $this->title;
                 }
             ],
             'price',
+            'final_price',
             'quantity',
             'description',
+            [
+                'attribute' => 'multiple_image',
+                'format' => 'raw',
+                'value' => function ($model) {
+                    $html = '';
+                    $images = [];
+
+                    // Decode the JSON string into an array
+                    if (!empty($model->multiple_image)) {
+                        $images = json_decode($model->multiple_image, true);
+                    }
+
+                    // Display each image
+                    if (is_array($images)) {
+                        foreach ($images as $img) {
+                            $img = trim($img);
+                            $url = Yii::getAlias('@storageUrl') . '/images/' . $img;
+
+                            $html .= \yii\helpers\Html::img($url, [
+                                'width' => '60',
+                                'height' => '60',
+                                'style' => 'margin: 3px; border-radius: 4px; border: 1px solid #ccc;',
+                            ]);
+                        }
+                    }
+
+                    return $html ?: \yii\helpers\Html::tag('span', 'No Images');
+                }
+            ],
+
+
             [
                 'class' => ActionColumn::className(),
                 'urlCreator' => function ($action, Product $model, $key, $index, $column) {
