@@ -199,8 +199,9 @@ class ApiController extends Controller
                     'product_name'   => $product->product_name,
                     'image'          => Yii::getAlias('@storageUrl') . '/images/' . $product->image,
                     'price'          => $product->price,
-                    'cut_price'    => $product->final_price,
+                    'cut_price'    => $product->cut_price,
                     'description'    => $product->description,
+                    'details' => preg_replace('/,\s*/', ",\n", trim(str_replace(["\r\n", "\r", "\n"], '', $product->details))),
                     'multiple_image' => $multipleImages,
                 ];
             }

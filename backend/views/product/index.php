@@ -51,7 +51,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 }
             ],
             [
-                'attribute' => 'final_price',
+                'attribute' => 'cut_price',
                 'label' => 'Cut Price',
             ],
             'price',
@@ -84,6 +84,26 @@ $this->params['breadcrumbs'][] = $this->title;
                     }
 
                     return $html ?: \yii\helpers\Html::tag('span', 'No Images');
+                }
+            ],
+
+            [
+                'attribute' => 'details',
+                'format' => 'raw',
+                'value' => function ($model) {
+                    if (empty($model->details)) return '<em>No Details</em>';
+
+                    $items = [];
+                    $pairs = explode(',', $model->details);
+                    foreach ($pairs as $pair) {
+                        $parts = explode(':', $pair, 2);
+                        if (count($parts) === 2) {
+                            $label = trim($parts[0]);
+                            $value = trim($parts[1]);
+                            $items[] = "<strong>{$label}:</strong> {$value}";
+                        }
+                    }
+                    return implode('<br>', $items);
                 }
             ],
 
