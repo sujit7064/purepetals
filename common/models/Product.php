@@ -78,4 +78,8 @@ class Product extends \yii\db\ActiveRecord
             'is_delete' => 'Is Delete',
         ];
     }
+    public function getCategory()
+    {
+        return $this->hasOne(Category::class, ['id' => 'category_id']);
+    }
 }

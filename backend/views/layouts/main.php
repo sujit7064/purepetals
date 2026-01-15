@@ -48,11 +48,11 @@ AppAsset::register($this);
                         </li>
 
                         </li>
-                        <!-- <li class="sidebar-item">
+                        <li class="sidebar-item">
                             <a class="sidebar-link" href="<?= Url::toRoute(['category/index']) ?>">
                                 <i class="align-middle" data-feather="user"></i> <span class="align-middle">Category</span>
                             </a>
-                        </li> -->
+                        </li>
                         <li class="sidebar-item">
                             <a class="sidebar-link" href="<?= Url::toRoute(['product/index']) ?>">
                                 <i class="align-middle" data-feather="user"></i> <span class="align-middle">Product</span>
