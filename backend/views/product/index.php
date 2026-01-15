@@ -30,7 +30,13 @@ $this->params['breadcrumbs'][] = $this->title;
         'columns' => [
             ['class' => 'yii\grid\SerialColumn'],
 
-            // 'category_id',
+            [
+                'label' => 'Category',
+                'attribute' => 'category_id',
+                'value' => function ($model) {
+                    return $model->category ? $model->category->category_name : 'N/A';
+                },
+            ],
             'product_name',
             [
                 'attribute' => 'image',

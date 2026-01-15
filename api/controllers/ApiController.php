@@ -4,6 +4,7 @@ namespace api\controllers;
 
 use common\models\AddressDetails;
 use common\models\CartItem;
+use common\models\Category;
 use common\models\Product;
 use Yii\db\Exception;
 use Yii;
@@ -301,50 +302,109 @@ class ApiController extends Controller
 
     public function actionCartitemlist()
     {
-        $rest = [];
-        $request = Yii::$app->request;
-        $buyer_id = $request->post('buyer_id');
+        $buyer_id = Yii::$app->request->post('buyer_id');
+
         try {
+            // Get cart items
             $cartItems = CartItem::find()->where(['buyer_id' => $buyer_id])->all();
-            $totalcartamount = CartItem::find()->where(['buyer_id' => $buyer_id])->sum('total_amount');
+
+            // Calculate cart total (excluding free items)
+            $totalcartamount = CartItem::find()
+                ->where(['buyer_id' => $buyer_id])
+                ->andWhere(['>', 'product_price', 0])
+                ->sum('total_amount');
+
             $delivery_charges = 49;
-            if ($cartItems) {
-                $cartDetails = [];
-                $baseUrl = Yii::$app->request->baseUrl;
+            $offer_min_amount = 399;
 
-                foreach ($cartItems as $item) {
-                    $buyer_name = Registration::find()->where(['user_id' => $item->buyer_id])->one();
-                    $image = Product::find()->where(['id' => $item->product_id])->one();
-                    $imagee = $image ? $image->image : null;
-                    $fullImageUrl = $imagee ?  Yii::getAlias('@storageUrl') . '/images/' . $imagee : '';
+            // ✅ Find cart offer product dynamically
+            $offerProduct = Product::find()
+                ->where([
+                    'is_cart_offer' => 1,
+                    'is_delete' => 0
+                ])
+                ->one();
 
-                    $cartDetails['cart_items'][] = [
-                        'cart_item_id' => $item->id,
-                        'product_quantity' => $item->product_quantity,
-                        'product_price' => number_format($item->product_price, 2, '.', ''),
-                        'total_amount' => number_format($item->total_amount, 2, '.', ''),
-                        'order_date' => date('d-m-Y', strtotime($item->order_date)),
-                        'delivery_date' => date('d-m-Y', strtotime($item->order_date . ' +7 days')),
-                        'image' =>  $fullImageUrl
-                    ];
+            // ================= OFFER APPLY =================
+            if ($offerProduct && $totalcartamount >= $offer_min_amount) {
+
+                $offerExists = CartItem::find()
+                    ->where([
+                        'buyer_id' => $buyer_id,
+                        'product_id' => $offerProduct->id
+                    ])
+                    ->one();
+
+                if (!$offerExists) {
+                    $offerItem = new CartItem();
+                    $offerItem->buyer_id = $buyer_id;
+                    $offerItem->product_id = $offerProduct->id;
+                    $offerItem->product_quantity = 1;
+                    $offerItem->product_price = 0;
+                    $offerItem->total_amount = 0;
+                    $offerItem->order_date = date('d-m-Y');
+                    $offerItem->save(false);
                 }
-                $cartDetails['total_amount'] = number_format($totalcartamount, 2, '.', '');
-                $cartDetails['delivery_charge'] = $delivery_charges;
-                $cartDetails['to_pay'] = number_format($totalcartamount + $delivery_charges, 2, '.', '');
-                $rest['message'] = 'Cart items retrieved successfully.';
-                $rest['status'] = 1;
-                $rest['data'] = $cartDetails;
-            } else {
-                $rest['message'] = 'No cart items found for the provided buyer ID.';
-                $rest['status'] = 0;
             }
-        } catch (Exception $e) {
-            $rest['message'] = 'An error occurred: ' . $e->getMessage();
-            $rest['status'] = 0;
-        }
 
-        return $this->asJson($rest);
+            // ❌ Remove offer if cart below minimum
+            if ($offerProduct && $totalcartamount < $offer_min_amount) {
+                CartItem::deleteAll([
+                    'buyer_id' => $buyer_id,
+                    'product_id' => $offerProduct->id
+                ]);
+            }
+
+            // Reload cart
+            $cartItems = CartItem::find()->where(['buyer_id' => $buyer_id])->all();
+
+            if (!$cartItems) {
+                return $this->asJson([
+                    'status' => 0,
+                    'message' => 'No cart items found'
+                ]);
+            }
+
+            $cartDetails = [];
+
+            foreach ($cartItems as $item) {
+                $product = Product::findOne($item->product_id);
+
+                $cartDetails['cart_items'][] = [
+                    'cart_item_id' => $item->id,
+                    'product_id' => $item->product_id,
+                    'product_name' => $product->product_name ?? '',
+                    'product_quantity' => $item->product_quantity,
+                    'product_price' => number_format($item->product_price, 2),
+                    'total_amount' => number_format($item->total_amount, 2),
+                    'is_free' => $item->product_price == 0 ? 1 : 0,
+                    'image' => $product && $product->image
+                        ? Yii::getAlias('@storageUrl') . '/images/' . $product->image
+                        : ''
+                ];
+            }
+
+            $cartDetails['total_amount'] = number_format($totalcartamount, 2);
+            $cartDetails['delivery_charge'] = $delivery_charges;
+            $cartDetails['to_pay'] = number_format($totalcartamount + $delivery_charges, 2);
+            $cartDetails['offer_applied'] = ($offerProduct && $totalcartamount >= $offer_min_amount) ? 1 : 0;
+            $cartDetails['offer_message'] = ($offerProduct && $totalcartamount >= $offer_min_amount)
+                ? 'Free ' . $offerProduct->product_name . ' added'
+                : 'Add ₹' . max(0, ($offer_min_amount - $totalcartamount)) . ' more to get free item';
+
+            return $this->asJson([
+                'status' => 1,
+                'message' => 'Cart items retrieved successfully',
+                'data' => $cartDetails
+            ]);
+        } catch (\Exception $e) {
+            return $this->asJson([
+                'status' => 0,
+                'message' => $e->getMessage()
+            ]);
+        }
     }
+
     public function actionCancelcartitem()
     {
         $buyer_id = Yii::$app->request->post('buyer_id');
@@ -708,5 +768,205 @@ class ApiController extends Controller
         } else {
             return ['status' => 0, 'message' => 'Failed to update order status'];
         }
+    }
+
+    public function actionCategorylist()
+    {
+        $rest = [];
+        $data = [];
+
+        $categories = Category::find()
+            ->where(['is_delete' => 0])
+            ->orderBy(['id' => SORT_ASC])
+            ->all();
+
+        if ($categories) {
+            foreach ($categories as $category) {
+                $data[] = [
+                    'category_id'   => $category->id,
+                    'category_name' => $category->category_name,
+                    'image'         => $category->image
+                        ? Yii::getAlias('@storageUrl') . '/images/' . $category->image
+                        : null,
+                ];
+            }
+
+            $rest['message'] = 'Category list fetched successfully';
+            $rest['status']  = 1;
+            $rest['data']    = $data;
+        } else {
+            $rest['message'] = 'No category found';
+            $rest['status']  = 0;
+            $rest['data']    = [];
+        }
+
+        return $this->asJson($rest);
+    }
+
+    public function actionProductbycategory()
+    {
+        $rest = [];
+        $data = [];
+
+        $category_id = Yii::$app->request->post('category_id');
+
+        if (!$category_id) {
+            return $this->asJson([
+                'status' => 0,
+                'message' => 'category_id is required',
+                'data' => [],
+            ]);
+        }
+
+        $products = Product::find()
+            ->where([
+                'category_id' => $category_id,
+                'is_delete' => 0
+            ])
+            ->orderBy(['id' => SORT_DESC])
+            ->all();
+
+        if ($products) {
+            foreach ($products as $product) {
+
+                // Multiple images
+                $multipleImages = [];
+                $files = json_decode($product->multiple_image, true);
+                if (is_array($files)) {
+                    foreach ($files as $file) {
+                        $multipleImages[] = Yii::getAlias('@storageUrl') . '/images/' . $file;
+                    }
+                }
+
+                $data[] = [
+                    'product_id'   => $product->id,
+                    'product_name' => $product->product_name,
+                    'image'        => Yii::getAlias('@storageUrl') . '/images/' . $product->image,
+                    'price'        => $product->price,
+                    'cut_price'    => $product->cut_price,
+                    'quantity'     => $product->quantity,
+                ];
+            }
+
+            $rest['status']  = 1;
+            $rest['message'] = 'Product list fetched successfully';
+            $rest['data']    = $data;
+        } else {
+            $rest['status']  = 0;
+            $rest['message'] = 'No products found';
+            $rest['data']    = [];
+        }
+
+        return $this->asJson($rest);
+    }
+
+    public function actionProductdetails()
+    {
+        $product_id = Yii::$app->request->post('product_id');
+
+        if (!$product_id) {
+            return $this->asJson([
+                'status' => 0,
+                'message' => 'product_id is required',
+            ]);
+        }
+
+        $product = Product::find()
+            ->where(['id' => $product_id, 'is_delete' => 0])
+            ->one();
+
+        if (!$product) {
+            return $this->asJson([
+                'status' => 0,
+                'message' => 'Product not found',
+            ]);
+        }
+
+        // Multiple images
+        $multipleImages = [];
+        $files = json_decode($product->multiple_image, true);
+        if (is_array($files)) {
+            foreach ($files as $file) {
+                $multipleImages[] = Yii::getAlias('@storageUrl') . '/images/' . $file;
+            }
+        }
+
+        $data = [
+            'product_id'   => $product->id,
+            'product_name' => $product->product_name,
+            'price'        => $product->price,
+            'cut_price'    => $product->cut_price,
+            'quantity'     => $product->quantity,
+            'description' => $product->description,
+            'details'      => preg_replace(
+                '/,\s*/',
+                ",\n",
+                trim(str_replace(["\r\n", "\r", "\n"], '', $product->details))
+            ),
+            'image'        => Yii::getAlias('@storageUrl') . '/images/' . $product->image,
+            'multiple_images' => $multipleImages,
+            'category' => [
+                'category_id' => $product->category->id ?? null,
+                'category_name' => $product->category->category_name ?? null,
+            ],
+        ];
+
+        return $this->asJson([
+            'status' => 1,
+            'message' => 'Product details fetched successfully',
+            'data' => $data,
+        ]);
+    }
+
+    public function actionSimilarproducts()
+    {
+        $product_id = Yii::$app->request->post('product_id');
+        $limit = Yii::$app->request->post('limit') ?? 6;
+
+        if (!$product_id) {
+            return $this->asJson([
+                'status' => 0,
+                'message' => 'product_id is required',
+            ]);
+        }
+
+        $product = Product::find()
+            ->where(['id' => $product_id, 'is_delete' => 0])
+            ->one();
+
+        if (!$product) {
+            return $this->asJson([
+                'status' => 0,
+                'message' => 'Product not found',
+            ]);
+        }
+
+        $similarProducts = Product::find()
+            ->where([
+                'category_id' => $product->category_id,
+                'is_delete' => 0
+            ])
+            ->andWhere(['!=', 'id', $product_id])
+            ->orderBy(['created_at' => SORT_DESC])
+            ->limit($limit)
+            ->all();
+
+        $data = [];
+
+        foreach ($similarProducts as $item) {
+            $data[] = [
+                'product_id'   => $item->id,
+                'product_name' => $item->product_name,
+                'image'        => Yii::getAlias('@storageUrl') . '/images/' . $item->image,
+                'price'        => $item->price,
+                'cut_price'    => $item->cut_price,
+            ];
+        }
+
+        return $this->asJson([
+            'status' => 1,
+            'message' => 'Similar products fetched successfully',
+            'data' => $data,
+        ]);
     }
 }

@@ -2,6 +2,7 @@
 
 namespace backend\controllers;
 
+use common\models\Category;
 use common\models\Product;
 use common\models\ProductSearch;
 use yii\web\Controller;
@@ -9,6 +10,7 @@ use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
 use yii\web\UploadedFile;
 use Yii;
+use yii\helpers\ArrayHelper;
 
 /**
  * ProductController implements the CRUD actions for Product model.
@@ -72,6 +74,11 @@ class ProductController extends Controller
     {
         $model = new Product();
         $model->scenario = 'create';
+        $categories = ArrayHelper::map(
+            Category::find()->where(['is_delete' => 0])->all(),
+            'id',
+            'category_name'
+        );
 
         if ($this->request->isPost) {
             if ($model->load($this->request->post())) {
@@ -117,6 +124,7 @@ class ProductController extends Controller
 
         return $this->render('create', [
             'model' => $model,
+            'categories' => $categories,
         ]);
     }
 
@@ -134,6 +142,12 @@ class ProductController extends Controller
         $oldMultipleImages = $model->multiple_image;
 
         $model->scenario = 'update';
+
+        $categories = ArrayHelper::map(
+            Category::find()->where(['is_delete' => 0])->all(),
+            'id',
+            'category_name'
+        );
 
         if ($this->request->isPost && $model->load($this->request->post())) {
 
@@ -188,6 +202,7 @@ class ProductController extends Controller
 
         return $this->render('update', [
             'model' => $model,
+            'categories' => $categories,
         ]);
     }
 
