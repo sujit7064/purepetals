@@ -222,22 +222,31 @@ class ApiController extends Controller
     public function actionBannerproduct()
     {
         $rest = $data = [];
-        $products = Product::find()->where(['status' => 1, 'is_delete' => 0])->all();
+
+        // Specific product IDs for banner
+
+        $products = Product::find()
+            ->where([
+                'status' => 1,
+                'is_delete' => 0
+            ])->all();
 
         if ($products) {
+            $message = "List available";
+            $status = 1;
+
             foreach ($products as $product) {
-                $message = " List available";
-                $status = 1;
                 $data[] = [
                     'product_id' => $product->id,
                     'product_name' => $product->product_name,
-                    'image' => Yii::getAlias('@storageUrl') . '/images/'  . $product->image
+                    'image' => Yii::getAlias('@storageUrl') . '/images/' . $product->image
                 ];
             }
         } else {
             $message = "List not available";
             $status = 0;
         }
+
         $rest['message'] = $message;
         $rest['status'] = $status;
         $rest['data'] = $data;
