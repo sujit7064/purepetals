@@ -563,13 +563,15 @@ class ApiController extends Controller
                 if ($products && $products->image) {
                     $imageUrl = Yii::getAlias('@storageUrl') . '/images/' . $products->image;
                 }
+                $productName = $products->product_name ?? 'Product';
+                $productPrice = $products->price ?? 0;
 
                 $details['orders'][] = [
                     'id' => $order->id,
                     'image' => $imageUrl,
                     'product_quantity' => $order->product_quantity,
-                    //'paymentdetails_id' => $order->paymentdetails_id,
-                    //'address_id' => $order->address_id,
+                    'product_name' => $productName,
+                    'product_price' => $productPrice,
                     'total_amount' => $order->total_amount,
                     'order_date' => $order->order_date,
                     'status' => OrderDetails::STATUSES[$order->order_status] ?? 'Unknown',
