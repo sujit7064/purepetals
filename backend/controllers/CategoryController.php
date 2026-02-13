@@ -108,8 +108,39 @@ class CategoryController extends Controller
     {
         $model = $this->findModel($id);
 
-        if ($this->request->isPost && $model->load($this->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->id]);
+        // store old image
+        $oldImage = $model->image;
+
+        if ($this->request->isPost && $model->load($this->request->post())) {
+
+            $upload_image = UploadedFile::getInstance($model, 'image');
+
+            // If new image uploaded
+            if ($upload_image) {
+
+                $baseName = str_replace(' ', '-', $upload_image->baseName);
+                $timestamp = date('Ymd-His');
+                $image = $baseName . '-' . $timestamp . '.' . $upload_image->extension;
+
+                $save_path = Yii::getAlias('@storage') . '/images/' . $image;
+
+                if ($upload_image->saveAs($save_path)) {
+
+                    // Optional: delete old image
+                    if ($oldImage && file_exists(Yii::getAlias('@storage') . '/images/' . $oldImage)) {
+                        unlink(Yii::getAlias('@storage') . '/images/' . $oldImage);
+                    }
+
+                    $model->image = $image;
+                }
+            } else {
+                // keep old image if no new upload
+                $model->image = $oldImage;
+            }
+
+            if ($model->save()) {
+                return $this->redirect(['index']);
+            }
         }
 
         return $this->render('update', [
