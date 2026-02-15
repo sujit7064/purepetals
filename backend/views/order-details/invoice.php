@@ -147,7 +147,7 @@ $this->title = 'Tax Invoice';
         <thead>
             <tr>
                 <th>Product</th>
-                <th>HSN</th>
+                <!-- <th>HSN</th> -->
                 <th>Qty</th>
                 <th>Gross Amount ₹</th>
                 <th>Discount ₹</th>
@@ -159,13 +159,14 @@ $this->title = 'Tax Invoice';
         </thead>
         <tbody>
             <?php foreach ($orders as $order): ?>
+                <?php $product = $order->product; ?>
                 <tr>
-                    <td><?= Html::encode($order->product->product_name) ?></td>
-                    <td><?= Html::encode($order->product->hsn_code ?? 'NA') ?></td>
+                    <td><?= Html::encode($product ? $product->product_name : 'Product Deleted') ?></td>
+                    <!-- <td></?= Html::encode($product->hsn_code ?? 'NA') ?></td> -->
                     <td><?= Html::encode($order->product_quantity) ?></td>
                     <td><?= number_format($order->total_amount, 2) ?></td>
                     <td><?= number_format($order->discount ?? 0, 2) ?></td>
-                    <td><?= number_format($order->taxable_value ?? ($order->total_amount - ($order->total_amount * 0.12)), 2) ?></td>
+                    <td><?= number_format($order->taxable_value ?? ($order->total_amount * 0.88), 2) ?></td>
                     <td><?= number_format($order->sgst ?? ($order->total_amount * 0.06), 2) ?></td>
                     <td><?= number_format($order->cgst ?? ($order->total_amount * 0.06), 2) ?></td>
                     <td><?= number_format($order->total_amount, 2) ?></td>
