@@ -239,7 +239,9 @@ class ApiController extends Controller
                 $data[] = [
                     'product_id' => $product->id,
                     'product_name' => $product->product_name,
-                    'image' => Yii::getAlias('@storageUrl') . '/images/' . $product->image
+                    'image' => Yii::getAlias('@storageUrl') . '/images/' . $product->image,
+                    'price'          => $product->price,
+                    'cut_price'    => $product->cut_price,
                 ];
             }
         } else {

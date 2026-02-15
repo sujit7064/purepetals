@@ -109,9 +109,9 @@ $this->title = 'Tax Invoice';
     <div class="section flex-row">
         <div class="left">
             <strong>Sold By:</strong>
-            <?= Html::encode($seller->name ?? 'PurePetal Enterprises') ?><br>
-            GSTIN: <?= Html::encode($seller->gstin ?? '27ABCDE1234F1Z5') ?><br>
-            <?= Html::encode($seller->address ?? '123 Business Park, Sector 21, Mumbai, Maharashtra - 400001') ?><br>
+            <?= Html::encode($seller->name ?? 'PUREPETAL ALLIANCE PRIVATE LIMITED') ?><br>
+            GSTIN: <?= Html::encode($seller->gstin ?? '21AAMCP1343C1ZZ') ?><br>
+            <?= Html::encode($seller->address ?? 'Plot No- 179/2515, Angargadia, Kalyan Nagar,Balasore, Odisha, 756001') ?><br>
         </div>
 
         <div class="right">
