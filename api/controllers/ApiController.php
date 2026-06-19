@@ -1012,9 +1012,7 @@ class ApiController extends Controller
 
         $otp = rand(100000, 999999);
 
-        Yii::$app->session->set('register_otp', $otp);
-
-        Yii::$app->session->set('register_email', $email);
+        Yii::$app->cache->set('reg_otp_' . $email, $otp, 600);
 
         try {
 
@@ -1268,11 +1266,10 @@ class ApiController extends Controller
         ]);
     }
 
-
     public function actionVerifyRegistrationOtp()
     {
         $email = Yii::$app->request->post('email');
-        $otp = Yii::$app->request->post('otp');
+        $otp   = Yii::$app->request->post('otp');
 
         if (empty($email) || empty($otp)) {
             return $this->asJson([
@@ -1281,32 +1278,23 @@ class ApiController extends Controller
             ]);
         }
 
-        $user = User::findOne(['email' => $email]);
+        $cachedOtp = Yii::$app->cache->get('reg_otp_' . $email);
 
-        if (!$user) {
+        if ($cachedOtp === false) {
             return $this->asJson([
                 'status' => 0,
-                'message' => 'User not found'
+                'message' => 'OTP expired or not found'
             ]);
         }
 
-        if ($user->otp != $otp) {
+        if ((string)$cachedOtp !== (string)$otp) {
             return $this->asJson([
                 'status' => 0,
                 'message' => 'Invalid OTP'
             ]);
         }
 
-        if (strtotime($user->otp_expire_time) < time()) {
-            return $this->asJson([
-                'status' => 0,
-                'message' => 'OTP expired'
-            ]);
-        }
-
-        $user->otp = null;
-        $user->otp_expire_time = null;
-        $user->save(false);
+        Yii::$app->cache->delete('reg_otp_' . $email);
 
         return $this->asJson([
             'status' => 1,
