@@ -110,7 +110,8 @@ class User extends ActiveRecord implements IdentityInterface
      * @param string $token verify email token
      * @return static|null
      */
-    public static function findByVerificationToken($token) {
+    public static function findByVerificationToken($token)
+    {
         return static::findOne([
             'verification_token' => $token,
             'status' => self::STATUS_INACTIVE
@@ -209,5 +210,56 @@ class User extends ActiveRecord implements IdentityInterface
     public function removePasswordResetToken()
     {
         $this->password_reset_token = null;
+    }
+
+    /**
+     * Generate OTP
+     */
+    public function generateOtp()
+    {
+        $this->otp = rand(100000, 999999);
+
+        $this->otp_expire_time = date(
+            'Y-m-d H:i:s',
+            strtotime('+10 minutes')
+        );
+
+        $this->otp_attempt = 0;
+    }
+
+    /**
+     * Verify OTP
+     */
+    public function validateOtp($otp)
+    {
+        if ($this->otp != $otp) {
+            return false;
+        }
+
+        if (strtotime($this->otp_expire_time) < time()) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Clear OTP
+     */
+    public function clearOtp()
+    {
+        $this->otp = null;
+        $this->otp_expire_time = null;
+        $this->otp_attempt = 0;
+    }
+
+    /**
+     * Mark email verified
+     */
+    public function markEmailVerified()
+    {
+        $this->is_otp_verified = 1;
+
+        $this->email_verified_at = date('Y-m-d H:i:s');
     }
 }

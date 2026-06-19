@@ -17,6 +17,9 @@ use common\models\OrderDetails;
 use common\models\PaymentDetails;
 use common\models\Registration;
 
+use PHPMailer\PHPMailer\PHPMailer;
+
+
 class ApiController extends Controller
 {
     public function behaviors()
@@ -980,6 +983,334 @@ class ApiController extends Controller
             'status' => 1,
             'message' => 'Similar products fetched successfully',
             'data' => $data,
+        ]);
+    }
+
+    public function actionSendRegistrationOtp()
+    {
+        $email = Yii::$app->request->post('email');
+
+        if (empty($email)) {
+
+            return $this->asJson([
+                'status' => 0,
+                'message' => 'Email is required'
+            ]);
+        }
+
+        $check = User::find()->where([
+            'email' => $email
+        ])->one();
+
+        if ($check) {
+
+            return $this->asJson([
+                'status' => 0,
+                'message' => 'Email already exists'
+            ]);
+        }
+
+        $otp = rand(100000, 999999);
+
+        Yii::$app->session->set('register_otp', $otp);
+
+        Yii::$app->session->set('register_email', $email);
+
+        try {
+
+            $mail = new PHPMailer(true);
+
+            $mail->isSMTP();
+
+            $mail->Host = 'smtp.gmail.com';
+
+            $mail->SMTPAuth = true;
+
+            $mail->Username = 'purepetalalliance@gmail.com';
+
+            $mail->Password = 'wczy sjnp jsji ttko';
+
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+
+            $mail->Port = 587;
+
+            $mail->setFrom(
+                'purepetalalliance@gmail.com',
+                'Pure Petal Alliance'
+            );
+
+            $mail->addAddress($email);
+
+            $mail->isHTML(true);
+
+            $mail->Subject = 'Registration OTP';
+
+            $mail->Body = "
+            <div style='font-family:Arial;padding:20px;'>
+
+                <h2>Email Verification OTP</h2>
+
+                <p>Hello</p>
+
+                <p>Your OTP is:</p>
+
+                <h1 style='letter-spacing:5px;color:#2d89ef;'>
+                    {$otp}
+                </h1>
+
+                <p>
+                    OTP valid for 10 minutes.
+                </p>
+
+                <br>
+
+                <p>
+                    Regards,<br>
+                    Pure Petal Alliance Team
+                </p>
+
+            </div>
+        ";
+
+            $mail->send();
+
+            return $this->asJson([
+                'status' => 1,
+                'message' => 'OTP sent successfully'
+            ]);
+        } catch (Exception $e) {
+
+            return $this->asJson([
+                'status' => 0,
+                'message' => 'Mail not sent',
+                'error' => $mail->ErrorInfo
+            ]);
+        }
+    }
+
+    public function actionForgotPasswordOtp()
+    {
+        $email = Yii::$app->request->post('email');
+
+        if (empty($email)) {
+
+            return $this->asJson([
+                'status' => 0,
+                'message' => 'Email required'
+            ]);
+        }
+
+        $user = User::find()->where([
+            'email' => $email
+        ])->one();
+
+        if (!$user) {
+
+            return $this->asJson([
+                'status' => 0,
+                'message' => 'Email not found'
+            ]);
+        }
+
+        $otp = rand(100000, 999999);
+
+        $user->otp = $otp;
+
+        $user->otp_expire_time = date(
+            'Y-m-d H:i:s',
+            strtotime('+10 minutes')
+        );
+
+        $user->save(false);
+
+        try {
+
+            $mail = new PHPMailer(true);
+
+            $mail->isSMTP();
+
+            $mail->Host = 'smtp.gmail.com';
+
+            $mail->SMTPAuth = true;
+
+            $mail->Username = 'purepetalalliance@gmail.com';
+
+            $mail->Password = 'wczy sjnp jsji ttko';
+
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+
+            $mail->Port = 587;
+
+            $mail->setFrom(
+                'purepetalalliance@gmail.com',
+                'Pure Petal Alliance'
+            );
+
+            $mail->addAddress(
+                $user->email,
+                $user->username
+            );
+
+            $mail->isHTML(true);
+
+            $mail->Subject = 'Forgot Password OTP';
+
+            $mail->Body = "
+            <div style='font-family:Arial;padding:20px;'>
+
+                <h2>Forgot Password OTP</h2>
+
+                <p>Your OTP is:</p>
+
+                <h1 style='letter-spacing:5px;color:#2d89ef;'>
+                    {$otp}
+                </h1>
+
+                <p>
+                    OTP valid for 10 minutes.
+                </p>
+
+            </div>
+        ";
+
+            $mail->send();
+
+            return $this->asJson([
+                'status' => 1,
+                'message' => 'OTP sent successfully'
+            ]);
+        } catch (Exception $e) {
+
+            return $this->asJson([
+                'status' => 0,
+                'message' => 'Mail not sent',
+                'error' => $mail->ErrorInfo
+            ]);
+        }
+    }
+
+    public function actionResetPassword()
+    {
+        $email = Yii::$app->request->post('email');
+
+        $otp = Yii::$app->request->post('otp');
+
+        $password = Yii::$app->request->post('password');
+
+        if (
+            empty($email) ||
+            empty($otp) ||
+            empty($password)
+        ) {
+
+            return $this->asJson([
+                'status' => 0,
+                'message' => 'All fields are required'
+            ]);
+        }
+
+        $user = User::find()->where([
+            'email' => $email
+        ])->one();
+
+        if (!$user) {
+
+            return $this->asJson([
+                'status' => 0,
+                'message' => 'User not found'
+            ]);
+        }
+
+        if ($user->otp != $otp) {
+
+            return $this->asJson([
+                'status' => 0,
+                'message' => 'Invalid OTP'
+            ]);
+        }
+
+        if (
+            strtotime($user->otp_expire_time) < time()
+        ) {
+
+            return $this->asJson([
+                'status' => 0,
+                'message' => 'OTP expired'
+            ]);
+        }
+
+        if (strlen($password) < 6) {
+
+            return $this->asJson([
+                'status' => 0,
+                'message' => 'Password must be at least 6 characters'
+            ]);
+        }
+
+        $user->password_hash =
+            Yii::$app->security->generatePasswordHash($password);
+
+        $user->otp = null;
+
+        $user->otp_expire_time = null;
+
+        if ($user->save(false)) {
+
+            return $this->asJson([
+                'status' => 1,
+                'message' => 'Password reset successful'
+            ]);
+        }
+
+        return $this->asJson([
+            'status' => 0,
+            'message' => 'Something went wrong'
+        ]);
+    }
+
+
+    public function actionVerifyRegistrationOtp()
+    {
+        $email = Yii::$app->request->post('email');
+        $otp = Yii::$app->request->post('otp');
+
+        if (empty($email) || empty($otp)) {
+            return $this->asJson([
+                'status' => 0,
+                'message' => 'All fields are required'
+            ]);
+        }
+
+        $user = User::findOne(['email' => $email]);
+
+        if (!$user) {
+            return $this->asJson([
+                'status' => 0,
+                'message' => 'User not found'
+            ]);
+        }
+
+        if ($user->otp != $otp) {
+            return $this->asJson([
+                'status' => 0,
+                'message' => 'Invalid OTP'
+            ]);
+        }
+
+        if (strtotime($user->otp_expire_time) < time()) {
+            return $this->asJson([
+                'status' => 0,
+                'message' => 'OTP expired'
+            ]);
+        }
+
+        $user->otp = null;
+        $user->otp_expire_time = null;
+        $user->save(false);
+
+        return $this->asJson([
+            'status' => 1,
+            'message' => 'OTP verified successfully'
         ]);
     }
 }
